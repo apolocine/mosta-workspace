@@ -1,0 +1,65 @@
+{
+  "name": "@mostajs/workspace",
+  "version": "0.1.0",
+  "description": "Scaffold multi-env workspace (dev/test/prod) pour les apps de l'écosystème @mostajs. CLI init + promote + status, templates Apache2 + pm2 + Next.js basePath, bootstrap chaîné des modules mostajs.",
+  "author": "Dr Hamid MADANI <drmdh@msn.com>",
+  "license": "AGPL-3.0-or-later",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "bin": {
+    "mostajs-workspace": "dist/cli/index.js"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    },
+    "./lib/scaffold": {
+      "types": "./dist/lib/scaffold.d.ts",
+      "import": "./dist/lib/scaffold.js",
+      "default": "./dist/lib/scaffold.js"
+    },
+    "./lib/promote": {
+      "types": "./dist/lib/promote.d.ts",
+      "import": "./dist/lib/promote.js",
+      "default": "./dist/lib/promote.js"
+    }
+  },
+  "files": [
+    "dist",
+    "src/templates",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsc && node scripts/copy-templates.mjs",
+    "test": "node --test test-scripts/*.test.mjs",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "cli",
+    "scaffold",
+    "workspace",
+    "multi-env",
+    "dev",
+    "test",
+    "prod",
+    "mostajs",
+    "nextjs",
+    "apache2",
+    "pm2"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/apolocine/mosta-workspace"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "^5.6.0"
+  }
+}
