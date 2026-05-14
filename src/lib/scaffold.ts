@@ -37,7 +37,7 @@ export interface ScaffoldOptions {
   webserver?: Webserver
   /** Domaine apex (default 'amia.fr'). */
   domain?: string
-  /** Workspace root (default `${HOME}/dev/MostaGare-Install`). */
+  /** Workspace root (default `process.cwd()`). */
   workspaceRoot?: string
   /** Ports custom (default 3021/3022/3023). */
   ports?: Partial<PortAllocation>
@@ -99,8 +99,9 @@ export async function scaffoldProject(opts: ScaffoldOptions): Promise<ScaffoldRe
   const mode: UrlMode = opts.mode ?? 'path'
   const webserver: Webserver = opts.webserver ?? 'apache2'
   const domain = opts.domain ?? 'amia.fr'
-  const workspaceRoot = opts.workspaceRoot ?? process.env.MOSTAJS_WORKSPACE_ROOT
-    ?? join(process.env.HOME ?? '/tmp', 'dev/MostaGare-Install')
+  const workspaceRoot = opts.workspaceRoot
+    ?? process.env.MOSTAJS_WORKSPACE_ROOT
+    ?? process.cwd()
   const ports: PortAllocation = { ...DEFAULT_PORTS, ...opts.ports }
   const deps = opts.deps ?? DEFAULT_MOSTAJS_DEPS
 

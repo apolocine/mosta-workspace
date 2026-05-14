@@ -1,6 +1,6 @@
 {
   "name": "@mostajs/workspace",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Scaffold multi-env workspace (dev/test/prod) pour les apps de l'écosystème @mostajs. CLI init + promote + status, templates Apache2 + pm2 + Next.js basePath, bootstrap chaîné des modules mostajs.",
   "author": "Dr Hamid MADANI <drmdh@msn.com>",
   "license": "AGPL-3.0-or-later",

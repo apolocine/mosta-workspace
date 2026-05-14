@@ -51,7 +51,7 @@ Options pour 'init':
                              - path:      <project>.<domain>/{dev,test,prod}
                              - subdomain: {dev,test}.<project>.<domain> + <project>.<domain>
   --webserver=apache2|nginx  Reverse proxy (default: apache2)
-  --root=<path>              Workspace root (default: ~/dev/MostaGare-Install)
+  --root=<path>              Workspace root (default: dossier courant ou $MOSTAJS_WORKSPACE_ROOT)
   --ports=3021,3022,3023     Ports custom (default: 3021/3022/3023)
   --dry-run                  Affiche le plan sans rien écrire
   --force                    Overwrite si le dossier projet existe

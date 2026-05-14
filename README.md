@@ -52,7 +52,7 @@ Le **domaine** peut être passé en 2e argument positionnel **ou** via `--domain
 | `--mode=path|subdomain` | `path`                 | Topologie URL                                |
 | `--webserver=apache2|nginx` | `apache2`          | Reverse proxy                                |
 | `--domain=<domain>`     | `amia.fr`              | Domaine apex (alternative au positionnel)    |
-| `--root=<path>`         | `~/dev/MostaGare-Install` | Workspace root                            |
+| `--root=<path>`         | `process.cwd()`        | Workspace root (ou `$MOSTAJS_WORKSPACE_ROOT`)|
 | `--ports=3021,3022,3023`| `3021,3022,3023`       | Ports dev,test,prod                          |
 | `--dry-run`             | —                      | Affiche le plan sans rien écrire             |
 | `--force`               | —                      | Overwrite si le dossier existe               |
