@@ -1,0 +1,107 @@
+# @mostajs/workspace — fiche LLM
+> Scaffold de workspace multi-env (dev/test/prod) pour les apps de l'écosystème @mostajs — CLI init/promote/status.
+
+- Version: 0.1.1 · Licence: AGPL-3.0-or-later · Auteur: Dr Hamid MADANI <drmdh@msn.com>
+- Chemin: mostajs/mosta-workspace · Statut audit: complet (dist/)
+
+## RÔLE
+Outil CLI (et librairie) qui scaffolde un workspace multi-environnement pour une app mostajs.
+Pour un projet donné il crée trois dossiers locaux `dev/` (modifiable), `test/` et `prod/`
+(immuables, remplacés par promotion rsync), génère les vhosts reverse-proxy (Apache2 ou Nginx),
+le fichier pm2 `ecosystem.config.cjs`, un `WORKFLOW.md`, et initialise `dev/` avec un template
+Next.js 15 où les modules @mostajs/* sont pré-câblés via un bootstrap chaîné idempotent.
+Couvre le cycle complet : init → développer dans dev/ → promote dev→test→prod → status.
+
+## INSTALLATION
+Mode CLI :        npm install -g @mostajs/workspace   (ou npx @mostajs/workspace ...)
+Mode librairie :  npm i @mostajs/workspace
+Binaire exposé : `mostajs-workspace` → dist/cli/index.js
+Engines : node >=18
+
+## COMMANDES CLI
+- `mostajs-workspace init <project> [<domain>] [options]`
+  options : --mode=path|subdomain (def path), --webserver=apache2|nginx (def apache2),
+  --domain=<d> (def amia.fr), --root=<path> (def cwd ou $MOSTAJS_WORKSPACE_ROOT),
+  --ports=3021,3022,3023, --dry-run, --force
+- `mostajs-workspace promote dev->test [<project-dir>]`  /  `promote test->prod [<project-dir>]`
+- `mostajs-workspace status [<project-dir>]`
+
+## EXPORTS
+- Fonctions : scaffoldProject, promoteEnv, getWorkspaceStatus, envUrl, envBasePath
+- Constante : moduleInfo { name, version }, ENVS, DEFAULT_PORTS, DEFAULT_MOSTAJS_DEPS
+- Types : ScaffoldOptions, ScaffoldResult, PromoteOptions, PromoteResult, WorkspaceStatus,
+  EnvStatus, Env, PortAllocation, UrlMode, Webserver
+
+## EXPORTS PAR SOUS-CHEMIN
+- `@mostajs/workspace`             → barrel : scaffoldProject, promoteEnv, getWorkspaceStatus, moduleInfo + types.
+- `@mostajs/workspace/lib/scaffold` → scaffoldProject, envUrl, envBasePath + types ScaffoldOptions/ScaffoldResult/UrlMode/Webserver.
+- `@mostajs/workspace/lib/promote`  → promoteEnv + types PromoteOptions/PromoteResult.
+
+## API — SIGNATURES
+- scaffoldProject(opts: ScaffoldOptions): Promise<ScaffoldResult>  — crée la structure complète du workspace.
+- promoteEnv(opts: PromoteOptions): Promise<PromoteResult>  — rsync env source → env cible.
+- getWorkspaceStatus(projectDir: string): Promise<WorkspaceStatus>  — état des 3 envs.
+- envUrl(env: Env, project: string, domain: string, mode: UrlMode): string
+- envBasePath(env: Env, mode: UrlMode): string  — basePath Next.js selon le mode.
+
+## TYPES CLÉS
+- Env = 'dev' | 'test' | 'prod'  (ENVS = readonly Env[])
+- UrlMode = 'path' | 'subdomain'  ·  Webserver = 'apache2' | 'nginx'
+- PortAllocation { dev: number; test: number; prod: number }  (DEFAULT_PORTS = 3021/3022/3023)
+- ScaffoldOptions { project: string; mode? (def 'path'); webserver? (def 'apache2');
+    domain? (def 'amia.fr'); workspaceRoot? (def cwd); ports?: Partial<PortAllocation>;
+    deps?: Record<string,string> (def DEFAULT_MOSTAJS_DEPS); dryRun?; force? (def false) }
+- ScaffoldResult { projectDir; envDirs: Record<Env,string>; webserverConfPath; apacheConfPath
+    (alias legacy); webserver; pm2EcosystemPath; workflowDocPath; filesCreated: string[]; warnings: string[] }
+- PromoteOptions { projectDir: string; from: Env; to: Env; dryRun?; skipBuildCheck? }
+- PromoteResult { from; to; sourceDir; targetDir; rsyncArgs: string[]; stdout; stderr; exitCode; warnings }
+- EnvStatus { env; dir; exists; hasPackageJson; hasNodeModules; hasNextBuild; hasEnvFile;
+    mostaEnvDetected?; port?; packageVersion? }
+- WorkspaceStatus { projectDir; envs: Record<Env, EnvStatus>; warnings: string[] }
+
+## PATTERN
+```ts
+import { scaffoldProject, promoteEnv, getWorkspaceStatus } from '@mostajs/workspace'
+
+// 1. Scaffolder un nouveau projet multi-env
+const res = await scaffoldProject({
+  project: 'iquesta', domain: 'amia.fr', mode: 'path', webserver: 'apache2',
+})
+// → res.envDirs.dev, res.webserverConfPath, res.pm2EcosystemPath
+
+// 2. Promouvoir dev validée vers test (rsync)
+const p = await promoteEnv({ projectDir: res.projectDir, from: 'dev', to: 'test' })
+
+// 3. État des 3 envs
+const status = await getWorkspaceStatus(res.projectDir)
+```
+Équivalent CLI : `mostajs-workspace init iquesta amia.fr --mode=path` puis
+`mostajs-workspace promote dev->test` puis `mostajs-workspace status`.
+
+## DÉPEND DE
+Aucun module @mostajs/* requis au runtime du module lui-même (devDependencies : @types/node,
+typescript uniquement). NOTE : les apps SCAFFOLDÉES pré-câblent 11 modules @mostajs/*
+(config, data-plug, orm, auth, mailer, rbac, storage, subscriptions-plan, qrpanel, pwa-scan,
+payment, pm2) via `dev/lib/bootstrap.ts` — ce sont des deps du projet généré, pas de ce module.
+
+## PIÈGES
+- Règle stricte d'immuabilité : seul `dev/` est éditable. `test/` et `prod/` sont ENTIÈREMENT
+  remplacés par `promote` (rsync) — toute modif locale y sera écrasée.
+- `scaffoldProject` échoue si le dossier projet existe déjà, sauf `force: true`.
+- Mode `path` (default) → 1 vhost avec 3 ProxyPass + basePath Next.js dynamique (lit BASE_PATH).
+  Mode `subdomain` → 3 vhosts indépendants, pas de basePath.
+- `promote` exclut node_modules/, .next/, .env, .env.template, data/, *.sqlite*, .git/, logs/ ;
+  le `.env` cible est créé depuis `.env.template` au premier promote, puis patché (MOSTA_ENV).
+- `promoteEnv` vérifie qu'un build `.next` existe côté source — désactivable via `skipBuildCheck`.
+- `ScaffoldResult.apacheConfPath` est un alias rétrocompat de `webserverConfPath` (le chemin
+  réel suit `webserver`, Apache2 ou Nginx).
+- Le template ne copie l'app Next.js que dans `dev/` ; `test/`/`prod/` restent vides jusqu'au
+  premier promote.
+- `bootstrap.ts` du template est idempotent (premier appel exécute la chaîne, suivants no-op),
+  appelé lazy depuis `lib/db.ts:getDialect()`.
+
+## RÉFÉRENCES
+- README.md (topologie, modes URL, CLI, reverse proxy + pm2, template app, workflow)
+- MONOTORING.md (notes de monitoring)
+- docs/, WORKFLOW.md (généré dans chaque projet scaffoldé)
+- LICENSE
