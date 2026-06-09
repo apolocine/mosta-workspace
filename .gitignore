@@ -6,3 +6,5 @@ dist
 .env.local
 *.tgz
 .tsbuildinfo
+docs/
+test-scripts/
